@@ -1,0 +1,98 @@
+Username: <input type="text" id="player" value="PlayerX">
+
+<br><br>
+<br><br>
+
+<script src="web3.min.js"></script>
+<script type = "text/javascript" >
+
+    function showSmartContract() {
+        window.open("https://ropsten.etherscan.io/address/0x3fC3D7ab5B97117162e0C4491e6a364b53a57A08#code");
+    }
+
+    function callSmartContract() {
+        document.getElementById("img").src='loading.gif';
+        document.getElementById("info").style.display='block';
+        document.getElementById("info").value="PLEASE WAIT ... ";
+        document.getElementById("Buy").disabled=true;
+
+        web3 = new Web3(new Web3.providers.HttpProvider("https://ropsten.infura.io/v3/6cb4db20a1a24b579da58975af4d8b90"));
+
+        const abi             = [{"constant":true,"inputs":[],"name":"gameDeveloper","outputs":[{"name":"","type":"address"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":false,"inputs":[{"name":"screenName","type":"string"}],"name":"drawItem","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"items","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[{"name":"","type":"uint256"}],"name":"probabilities","outputs":[{"name":"","type":"uint256"}],"payable":false,"stateMutability":"view","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"name":"item","type":"string"},{"indexed":false,"name":"screenName","type":"string"}],"name":"Draws","type":"event"}];
+        const contractAddress =  "0x3fC3D7ab5B97117162e0C4491e6a364b53a57A08";
+        const contract        = new web3.eth.Contract(abi,contractAddress);
+
+        const publicKey  = "0x00A877E0325Ba6c697f5a6ae05Fa8F91b544276C"; 
+        const privateKey = "0xBFCA1FEBB85569C5E123C5BDA5D9B427F4119FCFE1914B3216845DA3EB4EBAF3"; //home-office pc 
+
+        web3.eth.getTransactionCount(publicKey).then(function(nonceCount){
+
+			// Changing data on Ethereum - some Ether is payed, so the transaction must be signed
+            const signPromise = web3.eth.accounts.signTransaction({
+                from: publicKey,
+                to:   contractAddress,
+                gas: '3000000',
+                gasPrice: web3.utils.toWei('10', 'gwei'),
+                value: web3.utils.toWei('0', 'ether'), //0.1 ether
+                chainId: 3, //Ropsten,
+                nonce: nonceCount,
+                data: contract.methods.drawItem(document.getElementById("player").value).encodeABI()
+            }, privateKey);
+
+
+
+            signPromise.then((signedTx) => {
+                const sentTx = web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+                sentTx.on("receipt", processOutputSmartContract);
+                sentTx.on("error", console.log);   
+            }).catch((err) => {
+                console.log(err);
+                document.getElementById("img").src='loot-box.png';
+                document.getElementById("info").value="There was an error with your transaction";
+                document.getElementById("Buy").disabled=false;
+            });
+
+		});
+    }
+
+    function processOutputSmartContract(args) {
+        console.log(args.transactionHash);
+        outputList = args.logs[0].data;
+        outputListDecoded = web3.eth.abi.decodeParameters([
+            {
+                "type": "string",
+                "name": "item"				
+            },
+            {
+                "type": "string",
+                "name": "player"
+            }
+        ],outputList);
+
+        console.log(outputListDecoded.item);
+        
+        if(outputListDecoded.item == "Dragon Sword"){
+            document.getElementById("img").src='dragon.png';
+        }
+        else if(outputListDecoded.item == "Silver Sword"){
+            document.getElementById("img").src='silver.png';
+        }
+        else if(outputListDecoded.item == "Common Sword"){
+            document.getElementById("img").src='common.png';
+        }
+
+        document.getElementById("info").value="Transaction: https://ropsten.etherscan.io/tx/" + args.transactionHash;
+        document.getElementById("Buy").disabled=false;
+
+
+	}
+</script>
+
+
+<img src = "loot-box.png" id = "img" width="531" height="328" >
+<br><br>
+<input type="text"   id="info" value="PLEASE WAIT ... " readonly style="display:none"  size=125>
+<br><br>
+<input type="button" value="Buy Loot Box"          onclick="callSmartContract()" id="Buy" >
+<br><br>
+<input type="button" value="Check the Blockchain"  onclick="showSmartContract()" id="Check">
