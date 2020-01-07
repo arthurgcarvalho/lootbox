@@ -1,6 +1,6 @@
 # Bringing Transparency and Trustworthiness to Loot Boxes with Blockchain and Smart Contracts
 
-This project contains the source code of the major artifacts proposed in the paper ``"Bringing Transparency and Trustworthiness to Loot Boxes with Blockchain and Smart Contracts"``.
+This project contains the source code of the major artifacts proposed in the paper "<i>Bringing Transparency and Trustworthiness to Loot Boxes with Blockchain and Smart Contracts"</i>.
 
 The folder ``smart contract`` has the code concerning the development of a loot box as a smart contract.
 
